@@ -1,7 +1,24 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+from ctypes import cast, POINTER
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from comtypes import CLSCTX_ALL
 
+def vol_control(distance):
+    ## Config    
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+    vol_range = volume.GetVolumeRange()
+    min_vol, max_vol = vol_range[0], vol_range[1]
+    
+    # Interpolations and setter
+    intepolation_vol_coord = np.interp(distance, [25, 180], [min_vol, max_vol])
+    volume.SetMasterVolumeLevel(intepolation_vol_coord, None)
+    interpolation_volperc_coord = int(np.interp(distance, [20, 200], [0, 100]))
+    interpolation_vol_bar = int(np.interp(interpolation_volperc_coord, [0, 100], [180, 420]))
+    return int(intepolation_vol_coord), interpolation_vol_bar
 
 def run():
 
@@ -43,6 +60,23 @@ def run():
 
                         # Drawing a line between thumb finger tip and index finger tip
                         cv2.line(img, (thumb_tip_x, thumb_tip_y), (index_tip_x, index_tip_y), (0, 255, 0), 2)
+
+                        ## Calculate hypotenuse (distance of drawn line)
+                        delta_x = abs(thumb_tip_x - index_tip_x)
+                        delta_y = abs(thumb_tip_y - index_tip_y)
+                        hypot = int(np.sqrt(delta_x ** 2 + delta_y ** 2))
+                        print(hypot)
+                        
+                        ## Middle circle
+                        min_x = np.min([thumb_tip_x, index_tip_x])
+                        min_y = np.min([thumb_tip_y, index_tip_y])
+                        middle_x = min_x + delta_x // 2
+                        middle_y = min_y + delta_y // 2
+                        cv2.circle(img, (middle_x, middle_y), 10, (0, 255, 0), -1)
+
+                        level, interpolation_vol_bar = vol_control(hypot)
+                        print(f'{level}%, {interpolation_vol_bar}')
+
 
 
                 img = cv2.flip(img, 1)
