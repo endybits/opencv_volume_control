@@ -5,8 +5,8 @@ import numpy as np
 
 def run():
 
-    mp_hands = mp.solutions.hands
-    mp_drawing = mp.solutions.drawing_utils
+    mp_hands = mp.solutions.mediapipe.python.solutions.hands
+    mp_drawing = mp.solutions.mediapipe.python.solutions.drawing_utils
 
     ## Mediapipe hand tracker configuration
     with mp_hands.Hands(
@@ -20,10 +20,30 @@ def run():
         while cap.isOpened():
             success, img = cap.read()
             if success:
+                h, w, _ = img.shape
                 img = cv2.flip(img, 1)
                 img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # Mediapipe use the RGB format
                 results = hands.process(img_rgb)
-                print(results.multi_hand_landmarks)
+                
+                if results.multi_hand_landmarks is not None:
+                    for landmarks in results.multi_hand_landmarks:
+                        mp_drawing.draw_landmarks(img, landmarks, mp_hands.HAND_CONNECTIONS)
+                        
+                        ## Separate non-serialized coordinates of the fingertips
+                        thumb_tip_x = landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x
+                        thumb_tip_y = landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y
+                        index_tip_x = landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x
+                        index_tip_y = landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y
+
+                        ## Coordinates to line between fingertips
+                        thumb_tip_x = int(thumb_tip_x * w)
+                        thumb_tip_y = int(thumb_tip_y * h)
+                        index_tip_x = int(index_tip_x * w)
+                        index_tip_y = int(index_tip_y * h)
+
+                        # Drawing a line between thumb finger tip and index finger tip
+                        cv2.line(img, (thumb_tip_x, thumb_tip_y), (index_tip_x, index_tip_y), (0, 255, 0), 2)
+
 
                 img = cv2.flip(img, 1)
                 cv2.imshow('Video Capture', img)
