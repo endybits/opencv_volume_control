@@ -5,25 +5,25 @@ from ctypes import cast, POINTER
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from comtypes import CLSCTX_ALL
 
-def vol_control(distance):
-    ## Config    
+def vol_control(distance, min_vol, max_vol, volume):
+
+    intepolation_vol_coord = int(np.interp(distance, [25, 180], [min_vol, max_vol]))
+    volume.SetMasterVolumeLevel(intepolation_vol_coord, None)
+    interpolation_volperc_coord = int(np.interp(distance, [25, 180], [0, 100]))
+    interpolation_vol_bar = int(np.interp(interpolation_volperc_coord, [0, 100], [180, 420]))
+    return interpolation_volperc_coord, interpolation_vol_bar
+
+def run():
+
+    ## Config Volume    
     devices = AudioUtilities.GetSpeakers()
     interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
     volume = cast(interface, POINTER(IAudioEndpointVolume))
     vol_range = volume.GetVolumeRange()
     min_vol, max_vol = vol_range[0], vol_range[1]
-    
-    # Interpolations and setter
-    intepolation_vol_coord = np.interp(distance, [25, 180], [min_vol, max_vol])
-    volume.SetMasterVolumeLevel(intepolation_vol_coord, None)
-    interpolation_volperc_coord = int(np.interp(distance, [20, 200], [0, 100]))
-    interpolation_vol_bar = int(np.interp(interpolation_volperc_coord, [0, 100], [180, 420]))
-    return int(intepolation_vol_coord), interpolation_vol_bar
 
-def run():
-
-    mp_hands = mp.solutions.mediapipe.python.solutions.hands
-    mp_drawing = mp.solutions.mediapipe.python.solutions.drawing_utils
+    mp_hands = mp.solutions.hands
+    mp_drawing = mp.solutions.drawing_utils
 
     ## Mediapipe hand tracker configuration
     with mp_hands.Hands(
@@ -74,12 +74,17 @@ def run():
                         middle_y = min_y + delta_y // 2
                         cv2.circle(img, (middle_x, middle_y), 10, (0, 255, 0), -1)
 
-                        level, interpolation_vol_bar = vol_control(hypot)
-                        print(f'{level}%, {interpolation_vol_bar}')
+                        level, interpolation_vol_bar = vol_control(hypot, min_vol, max_vol, volume)
+                        
+                        
+                        level_text = f'VOLUME: {level}%'
+                        
+                        #img = cv2.flip(img, 1)
+                        cv2.putText(img, level_text, ((w - 210), (h - 20)), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)
 
+                        cv2.rectangle(img, (180, h-50), (420, h-20), (0, 0, 0), 2)
+                        cv2.rectangle(img, (180, h-50), (interpolation_vol_bar, h-20), (0, 0, 0), -1)
 
-
-                img = cv2.flip(img, 1)
                 cv2.imshow('Video Capture', img)
                 if cv2.waitKey(1) & 0xFF == ord('q'): #break the video captura if the 'q'q key is pessed.
                     break
