@@ -1,7 +1,8 @@
 # OpenCV Volume Control
+
 The aim of this project is to show how develop a volume control using hand landmarks detection with OpenCV and Mediapipe Python libraries.
 
-But, before starting with the volume control let me show you the 21th hand landmarks that we can identify using Mediapipe. 
+But before starting with the volume control let me show you the 21th hand landmarks that we can identify using Mediapipe. 
 
 ![](https://google.github.io/mediapipe/images/mobile/hand_landmarks.png)
 
@@ -13,11 +14,13 @@ The main trick of the exercise consists of extract the non-serialized coordinate
 
 The next logic step is calculate the distance between our two points. Do you remember the Pythagorean Theorem?
 
-$\Delta$x  = abs(x_thumb_tip - x_index_tip)
+<!-- &Delta;X  = abs(x_thumb_tip - x_index_tip) -->
+![](https://latex.codecogs.com/svg.image?%5CDelta%20x%20=%20%5Cleft%7C%20thumbTip_%7Bx%7D%20-%20indexTip_%7Bx%7D%20%5Cright%7C%20)
 
-$\Delta$y = abs(y_thumb_tip - y_index_tip)
+<!-- &Delta;y = abs(y_thumb_tip - y_index_tip) -->
+![](https://latex.codecogs.com/svg.image?%5CDelta%20y%20=%20%5Cleft%7C%20thumbTip_%7By%7D%20-%20indexTip_%7By%7D%20%5Cright%7C%20)
 
-hypotenuse = $\sqrt{\Delta x^2 + \Delta y^2}$
+![](https://latex.codecogs.com/svg.image?hypotenuse&space;=&space;\sqrt{\Delta&space;x^{2}&space;&plus;&space;\Delta&space;y^{2}})
 
 The hypotenuse value is the distance.
 
